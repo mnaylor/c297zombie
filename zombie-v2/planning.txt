@@ -1,0 +1,39 @@
+Strategies:
+	  
+Home base will be set up for normals.  On start-up, home base will be
+determined by whichever corner has the lowest zombie to normal ratio.
+
+//Idea: Find smallest normal.  Defenders will protect this normal at
+the cost of all other normals.  Strategy when my normals are pit
+against classmate's zombies.  Can't lose!!
+
+// What to do with happiness levels?
+
+Normals:
+ - cluster near defensive defenders/home base
+    
+    Behaviour on zombie alert: send the nearest normal out as bait,
+        while all other normals retreat to base.  Push nearest normal
+        out??
+
+    Non-interactive behaviour:
+
+Defenders:
+    - split into two groups, offensive, defensive
+    - grouping determined by proximity to home base on start-up
+    - offensive defenders move to takeout nearest zombie
+    - defensive defenders protects the cluster of normals/home base
+
+    Non-interactive behaviour:
+    - can turn zombie colour (practicality? maybe a different but similar
+    green?) to stop zombies from running away
+
+    Teleport: Opposite corner of home base
+
+Zombies:
+    - Run away from defenders
+    - Run towards normals
+
+    Non-interactive behaviour:
+    - a formation is made which will attract normals
+    - what triggers formation?
