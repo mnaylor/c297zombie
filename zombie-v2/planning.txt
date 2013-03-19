@@ -1,39 +1,25 @@
-Strategies:
-	  
-Home base will be set up for normals.  On start-up, home base will be
-determined by whichever corner has the lowest zombie to normal ratio.
+Strategy: 
+A "select" normal will be chosen, which will be defended
+at the cost of all other normal agents.  Three "select" defenders will
+be chosen to defend the select normal.  If there are fewer than three
+defenders, the select normal will run to the homebase corner, and will
+be defended by the defenders that are available.
 
-//Idea: Find smallest normal.  Defenders will protect this normal at
-the cost of all other normals.  Strategy when my normals are pit
-against classmate's zombies.  Can't lose!!
+Once the select team has been formed, the triangle will move around
+the playroom hunting down zombies.
 
-// What to do with happiness levels?
+All normals, other than the select normal, will cluster around a
+homebase corner.  If there are more than three defenders, the extra
+defenders will protect the homebase.
 
-Normals:
- - cluster near defensive defenders/home base
-    
-    Behaviour on zombie alert: send the nearest normal out as bait,
-        while all other normals retreat to base.  Push nearest normal
-        out??
+A zombie alert will be called by the defenders when a zombie
+approaches the homebase.  Upon a zombie alert, the normals will send a
+sacrificial lamb out to bait the zombies away from homebase.
 
-    Non-interactive behaviour:
+Defenders will teleport zombies to the farthest corner from the
+homebase.
 
-Defenders:
-    - split into two groups, offensive, defensive
-    - grouping determined by proximity to home base on start-up
-    - offensive defenders move to takeout nearest zombie
-    - defensive defenders protects the cluster of normals/home base
-
-    Non-interactive behaviour:
-    - can turn zombie colour (practicality? maybe a different but similar
-    green?) to stop zombies from running away
-
-    Teleport: Opposite corner of home base
-
-Zombies:
-    - Run away from defenders
-    - Run towards normals
-
-    Non-interactive behaviour:
-    - a formation is made which will attract normals
-    - what triggers formation?
+Zombies will mindlessly chase the normals - they will chase the normal
+that is nearest.  If there is a critical mass of zombies (say, greater
+than ten), the zombies will form a diagonal line and move across the
+screen, attacking all normals in their path.
