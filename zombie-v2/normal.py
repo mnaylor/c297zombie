@@ -54,14 +54,30 @@ def set_homebase():
     corner_set = ((0,0), (x_max, y_min), (x_min, y_max), (x_max, y_max))
 
     # set homebase to be the corner with the least # of zombies
-    homebase = min(
-        [(corner, get_count_near_point(corner, all_z), get_count_near_point(corner, all_n))
-         for corner in corner_set],
-         key = (lambda x:x[1])
-        )
+#    homebase = min(
+#        [(corner, get_count_near_point(corner, all_z), get_count_near_point(corner, all_n))
+#         for corner in corner_set],
+#         key = (lambda x:x[1])
+#        )
+    # find count of all zombies and normals in each corner
+    # sort based on number of zombies
+    count_list = [(corner, get_count_near_point(corner, all_z), 
+                  get_count_near_point(corner, all_n))
+                  for corner in corner_set]
+    count_list.sort(key = lambda x:x[1])
+    
+    # initialize homebase to corner with least number of zombies
+    homebase = count_list[0]
+    
+    # if there is a tie in number of zombies, choose corner with most normals
+    for i in range(3):
+        if homebase[1] == count_list[i + 1][1]:
+            if count_list[i][2] < count_list[i+1][2]:
+                homebase = count_list[i+1]
 
     if agentsim.debug.get(32):
-        print("homebase is {} with {} zombies".format(homebase[0], homebase[1]))
+        print("homebase is {} with {} zombies and {} normals".
+              format(homebase[0], homebase[1], homebase[2]))
 
     return homebase[0]
 
