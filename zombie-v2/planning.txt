@@ -1,3 +1,10 @@
+Idea: zombie teleport kick-ball
+From moveenhanced.py:
+# the teleport occurs immediately, not bufferred like a move_by.
+# this means you can cheat by repeatedly calling teleport inside
+# the compute_next_move function. 
+
+
 Strategy: 
 A "select" normal will be chosen, which will be defended
 at the cost of all other normal agents.  Three "select" defenders will
@@ -23,3 +30,33 @@ Zombies will mindlessly chase the normals - they will chase the normal
 that is nearest.  If there is a critical mass of zombies (say, greater
 than ten), the zombies will form a diagonal line and move across the
 screen, attacking all normals in their path.
+
+
+
+Useful methods:
+p.get_id(): each person has a unique id, cannot be changed
+
+p.get_xpos()
+p.get_ypos()
+p.move_by(delta_x, delta_y)
+
+get_move_limit(): delta <= _move_limit
+
+p.get_happiness()
+p.set_happiness(level)
+
+p.get_size()
+p.get_min_size()
+p.get_max_size()
+p.set_size(size)
+
+p.distances_to(q): returns a 4-tuple (d, delta_x, delta_y,
+    d_edge_edge) of d - the Euclidean distance between Person p and q
+    delta_x - the difference q.get_xpos() - p.get_xpos() 
+    delta_y - the difference q.get_ypos() - p.get_ypos() 
+    d_edge_edge - the distance between the edges of the circumferences 
+      of the objects, negative if they overlap
+
+get_all_present_instances()
+get_all_instances()
+

@@ -10,7 +10,8 @@ import zombie
 import defender
 
 # used to calculate distance to homebase
-near_epsilon = 200
+zombie_near = 150
+normal_near = 100
 # inititalize global homebase to none
 homebase = None
 
@@ -23,9 +24,6 @@ def distance_to_point(person, point):
     delta_y = point[1] - person.get_ypos()
     d = (delta_x * delta_x + delta_y * delta_y) ** 0.5
 
-    if agentsim.debug.get(32):
-        print("distance between person and point is {}".format(d))
-
     return d
 
 def get_count_near_point(point, group):
@@ -35,7 +33,7 @@ def get_count_near_point(point, group):
     # intialize count to 0
     count = 0
     for person in group:
-        if distance_to_point(person, point) < near_epsilon:
+        if distance_to_point(person, point) < zombie_near:
             count = count + 1
 
     if agentsim.debug.get(32):
@@ -53,6 +51,7 @@ def set_homebase():
     (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
     corner_set = ((0,0), (x_max, y_min), (x_min, y_max), (x_max, y_max))
 
+    # set homebase to be the corner with the least # of zombies
     homebase = min(
         [(corner, get_count_near_point(corner, all_z)) for corner in corner_set],
         key = (lambda x:x[1])
@@ -62,6 +61,40 @@ def set_homebase():
         print("homebase is {} with {} zombies".format(homebase[0], homebase[1]))
 
     return homebase[0]
+
+def invading_zombie(home):
+    """
+    checks to see if a zombie is near homebase
+    if yes, returns the nearest zombie
+    """
+    # find all zombies
+    all_z = zombie.Zombie.get_all_present_instances()
+
+    # find nearest zombie to homebase
+    z_near_home = min(
+        [ (z, distance_to_point(z, homebase)) for z in all_z ],
+        key = (lambda x: x[1]) )
+
+    (invading_z, dist_z) = z_near_home
+           
+    # if zombie is within homebase threshold
+    if dist_z < zombie_near:
+        return invading_z
+
+def sacrificial_lamb(invader):
+    """
+    selects sacrificial lamb to be used as zombie bait
+    """
+    all_n = Normal.get_all_present_instances()
+                
+    # sacrificial lamb is the normal closest to the zombie
+    lamb_dist = min(
+        [ (n, invader.distances_to(n)[0]) for n in all_n ]
+        , key = (lambda x:x[1]))
+                
+    (lamb, dist) = lamb_dist
+        
+    return lamb
 
 class Normal(MoveEnhanced):
 
@@ -86,41 +119,73 @@ class Normal(MoveEnhanced):
     def get_author(self):
         return "Alexander Wong, Michelle Naylor"
         
+    def move_to_homebase(self):
+        # if we have a pending zombie alert, act on that first
+        if self._zombie_alert_args is not None:
+            (x, y) = self._zombie_alert_args
+            delta_x = x - self.get_xpos()
+            delta_y = y - self.get_ypos()
+            # clear the alert
+            self._zombie_alert_args = None 
+        # move towards zombie base
+        else:
+            delta_x = homebase[0] - self.get_xpos()
+            delta_y = homebase[1] - self.get_ypos()
+
+        # if near homebase, set self._at_home to true
+        if distance_to_point(self, homebase) < normal_near:
+            self._at_home = True
+            if agentsim.debug.get(32):
+                print("normal {} is at home".format( self.get_name()))
+
+        return (delta_x, delta_y)
+
+    def lamb_move(self, homebase, invader):
+        """
+        sacrificial lamb will move away from homebase (for now)
+        """
+        delta_x = self.get_xpos() - homebase[0]
+        delta_y = self.get_ypos() - homebase[1]
+
+        return (delta_x, delta_y)
+            
+
     def compute_next_move(self):
         # if no homebase, set homebase
         global homebase
+        delta_x = 0
+        delta_y = 0
+        lamb = None
+
+        # find all zombies
+        all_z = zombie.Zombie.get_all_present_instances()
+
         if homebase == None:
             homebase = set_homebase()
              
         # move towards homebase if not yet near homebase
-        if self._at_home == False:
-            # if we have a pending zombie alert, act on that first
-            if self._zombie_alert_args is not None:
-                (x, y) = self._zombie_alert_args
-                delta_x = x - self.get_xpos()
-                delta_y = y - self.get_ypos()
-                # clear the alert
-                self._zombie_alert_args = None 
-            # move towards zombie base
-            else:
-                delta_x = homebase[0] - self.get_xpos()
-                delta_y = homebase[1] - self.get_ypos()
-                # if near homebase, set self._at_home
-                if distance_to_point(self, homebase) < near_epsilon:
-                    self._at_home = True
+#        if self._at_home == False:
+#            (delta_x, delta_y) = self.move_to_homebase()
+#            return (delta_x, delta_y)
 
-                    if agentsim.debug.get(32):
-                        print("normal {} is at home".format( self.get_name()))
+        # if zombie is near homebase, send sacrificial lamb
+        invading_z = invading_zombie(homebase)
+        if invading_z and not lamb:
+            lamb = sacrificial_lamb(invading_z)
+            
+            # sucker, you are bait
+            if self.get_id() == lamb.get_id():
+                (delta_x, delta_y) = self.lamb_move(homebase, invading_z)
+                if agentsim.debug.get(32):
+                    print("normal {} is the sacrificial lamb".format( self.get_name()))
 
-   
+        # default, move towards homebase
         else:
-            delta_x = 10 * (0.5 - random.random())
-            delta_y = 10 * (0.5 - random.random())
+            (delta_x, delta_y) = self.move_to_homebase()
 
         # and change happiness
         delta_h = 0.5 * (0.5 - random.random())
         self.set_happiness(delta_h + self.get_happiness())
-
 
         return (delta_x, delta_y)
 

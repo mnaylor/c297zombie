@@ -17,7 +17,7 @@ class Zombie(MoveEnhanced):
             print("Zombie", self._name)
 
     def get_author(self):
-        return "Your names go here"
+        return "Alexander Wong, Michelle Naylor"
 
     def compute_next_move(self):
         if agentsim.debug.get(128):

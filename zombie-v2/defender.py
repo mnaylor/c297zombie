@@ -64,7 +64,7 @@ class Defender(MoveEnhanced):
 
             # but if close enough to teleport, send the zombie to a random
             # point instead
-            if d_edge_edge <= self.get_teleport_threshold() :
+            if round(d_edge_edge, 3) <= self.get_teleport_threshold() :
                 (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
                 x = random.randint(x_min, x_max)
                 y = random.randint(y_min, y_max)
@@ -81,6 +81,8 @@ class Defender(MoveEnhanced):
 
         # alert the normals
         for n in normal.Normal.get_all_present_instances():
-            n.zombie_alert(0, 0)
+            for z in zombie.Zombie.get_all_present_instances():
+                if n.is_near(z, 20) == True:
+                    n.zombie_alert(z.get_xpos(), z.get_ypos())
 
         return (delta_x, delta_y)
