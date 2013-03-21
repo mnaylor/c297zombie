@@ -10,7 +10,7 @@ import zombie
 import defender
 
 # used to calculate distance to homebase
-zombie_near = 150
+zombie_near = 250
 normal_near = 100
 # inititalize global homebase to none
 homebase = None
@@ -47,14 +47,17 @@ def set_homebase():
     """
     # find all zombies
     all_z = zombie.Zombie.get_all_present_instances()
+    all_n = Normal.get_all_present_instances()
+
     # get corner coordinates
     (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
     corner_set = ((0,0), (x_max, y_min), (x_min, y_max), (x_max, y_max))
 
     # set homebase to be the corner with the least # of zombies
     homebase = min(
-        [(corner, get_count_near_point(corner, all_z)) for corner in corner_set],
-        key = (lambda x:x[1])
+        [(corner, get_count_near_point(corner, all_z), get_count_near_point(corner, all_n))
+         for corner in corner_set],
+         key = (lambda x:x[1])
         )
 
     if agentsim.debug.get(32):
@@ -164,9 +167,9 @@ class Normal(MoveEnhanced):
             homebase = set_homebase()
              
         # move towards homebase if not yet near homebase
-#        if self._at_home == False:
-#            (delta_x, delta_y) = self.move_to_homebase()
-#            return (delta_x, delta_y)
+        if self._at_home == False:
+            (delta_x, delta_y) = self.move_to_homebase()
+            return (delta_x, delta_y)
 
         # if zombie is near homebase, send sacrificial lamb
         invading_z = invading_zombie(homebase)
@@ -194,7 +197,8 @@ class Normal(MoveEnhanced):
         caller_name = callername.caller_name()
 
         if not re.search(r"\.Defender\.", caller_name):
-            raise Exception("zombie alert on {} called by non-Defender {}".format(self.get_name(), caller_name))
+            raise Exception("zombie alert on {} called by non-Defender {}"
+                            .format(self.get_name(), caller_name))
 
         if agentsim.debug.get(32):
             print("zombie_alert to ({}, {})".format( self.get_name(), x_dest, y_dest))
