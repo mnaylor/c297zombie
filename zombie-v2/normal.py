@@ -126,7 +126,7 @@ class Normal(MoveEnhanced):
         # this information can be processed.
 
         self._zombie_alert_args = None
-
+        
         self._at_home = False
 
         if agentsim.debug.get(2):
@@ -134,6 +134,7 @@ class Normal(MoveEnhanced):
 
         self.set_happiness(1 - 2 * random.random())
         self.set_size(random.uniform(self.get_min_size(), self.get_max_size()))
+        self._is_chosen = False
 
     def get_author(self):
         return "Alexander Wong, Michelle Naylor"
@@ -181,7 +182,11 @@ class Normal(MoveEnhanced):
 
         if homebase == None:
             homebase = set_homebase()
-             
+
+        # if chosen, move to the gravity well
+        if self._is_chosen == True:
+            self.set_size(self.get_min_size())
+
         # move towards homebase if not yet near homebase
         if self._at_home == False:
             (delta_x, delta_y) = self.move_to_homebase()
@@ -210,6 +215,7 @@ class Normal(MoveEnhanced):
 
     def zombie_alert(self, x_dest, y_dest):
         # ignore any request not from a defender!
+        # Only the chosen one will get a zombie alert ping
         caller_name = callername.caller_name()
 
         if not re.search(r"\.Defender\.", caller_name):
@@ -222,3 +228,4 @@ class Normal(MoveEnhanced):
         # remember where the alert told us to go so that we can use this
         # information when we compute the next move
         self._zombie_alert_args = (x_dest, y_dest)
+        self._is_chosen = True

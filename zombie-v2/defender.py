@@ -24,10 +24,26 @@ from moveenhanced import MoveEnhanced
 import zombie
 import normal
 
+def find_chosen(gravity):
+    """
+    This function takes a coordinate and finds the normal closest to it
+    """
+    min_grav = float("inf")
+    chosen_one = None
+    for n in normal.Normal.get_all_present_instances():
+        location = (n.get_xpos(), n.get_ypos())
+        priority = ((gravity[0] - location[0]) ** 2 + (gravity[1] - location[1]) ** 2) ** 0.5
+        if priority < min_grav:
+            min_grav = priority
+            chosen_one = n
+
+    return chosen_one
+
 class Defender(MoveEnhanced):
     """
     Goes around attempting to prevent zombies form reaching normals
     """
+    chosen_one = None
 
     def __init__(self, **keywords):
         MoveEnhanced.__init__(self, **keywords)
@@ -36,12 +52,61 @@ class Defender(MoveEnhanced):
             print("Defender", self._name)
 
     def get_author(self):
-        return "Your names go here"
+        return "Alexander Wong, Michelle Naylor"
+
+    def get_defender_gravity(self):
+        """
+        This will get the center of gravity for all present defenders
+        """
+        all_defenders = self.get_all_present_instances()
+        # Find the average coordinates of all the defenders in the field
+        count_defender = 0
+        x_holder = 0
+        y_holder = 0
+        for i in all_defenders:
+            print(i.get_id(), i.get_xpos(), i.get_ypos())
+            x_holder += i.get_xpos()
+            y_holder += i.get_ypos()
+            count_defender += 1
+            
+        x_holder = x_holder/count_defender
+        y_holder = y_holder/count_defender
+        gravity = (x_holder, y_holder)
+        print(gravity)
+        return gravity
+        
 
     def compute_next_move(self):
         delta_x = 0
         delta_y = 0
+        
+        # Find the gravity of the defenders
+        our_gravity = self.get_defender_gravity()
+        
+        # If we have no chosen one or our chosen one is a zombie,
+        # find the new chosen one
+        if (self.chosen_one == None or self.chosen_one in zombie.Zombie.get_all_instances()):
+            # Find the chosen normal to be protected
+            self.chosen_one = find_chosen(our_gravity)
+            # print(chosen_one.get_id(), chosen_one.get_xpos(), chosen_one.get_ypos())
+        
+        self.chosen_one.zombie_alert(our_gravity[0], our_gravity[1])
+        
+        """
+        for n in normal.Normal.get_all_present_instances():
+            for z in zombie.Zombie.get_all_present_instances():
+                if n.is_near(z, 20) == True:
+                    n.zombie_alert(z.get_xpos(), z.get_ypos())
+        """
 
+        # Set the rough gravity location coordinates
+        destination = (our_gravity[0] - self.get_xpos(), our_gravity[1] - self.get_ypos())
+        return destination
+        
+
+
+
+        
         # find nearest zombie if there is one!
         all_z = zombie.Zombie.get_all_present_instances()
         if all_z:
@@ -78,11 +143,5 @@ class Defender(MoveEnhanced):
                 print("d", d, "diag", diag, "dh", delta_h)
 
             self.set_happiness(delta_h + self.get_happiness())
-
-        # alert the normals
-        for n in normal.Normal.get_all_present_instances():
-            for z in zombie.Zombie.get_all_present_instances():
-                if n.is_near(z, 20) == True:
-                    n.zombie_alert(z.get_xpos(), z.get_ypos())
 
         return (delta_x, delta_y)
