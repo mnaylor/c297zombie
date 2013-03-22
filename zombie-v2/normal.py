@@ -143,8 +143,8 @@ class Normal(MoveEnhanced):
         # if we have a pending zombie alert, act on that first
         if self._zombie_alert_args is not None:
             (x, y) = self._zombie_alert_args
-            delta_x = x - self.get_xpos()
-            delta_y = y - self.get_ypos()
+            delta_x = self.get_xpos() - x
+            delta_y = self.get_ypos() - y
             # clear the alert
             self._zombie_alert_args = None 
         # move towards zombie base
@@ -168,6 +168,10 @@ class Normal(MoveEnhanced):
         delta_y = self.get_ypos() - homebase[1]
 
         return (delta_x, delta_y)
+    
+    # Fix this Alex
+    def set_as_chosen(self):
+        self._is_chosen = True
             
 
     def compute_next_move(self):
@@ -228,4 +232,3 @@ class Normal(MoveEnhanced):
         # remember where the alert told us to go so that we can use this
         # information when we compute the next move
         self._zombie_alert_args = (x_dest, y_dest)
-        self._is_chosen = True

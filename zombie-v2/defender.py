@@ -44,6 +44,7 @@ class Defender(MoveEnhanced):
     Goes around attempting to prevent zombies form reaching normals
     """
     chosen_one = None
+    chosen_defender = False
 
     def __init__(self, **keywords):
         MoveEnhanced.__init__(self, **keywords)
@@ -58,12 +59,15 @@ class Defender(MoveEnhanced):
         """
         This will get the center of gravity for all present defenders
         """
+        # Change this to three defenders only closest to the gravity
+
         all_defenders = self.get_all_present_instances()
         # Find the average coordinates of all the defenders in the field
         count_defender = 0
         x_holder = 0
         y_holder = 0
         for i in all_defenders:
+            self.chosen_defender = True
             print(i.get_id(), i.get_xpos(), i.get_ypos())
             x_holder += i.get_xpos()
             y_holder += i.get_ypos()
@@ -85,12 +89,12 @@ class Defender(MoveEnhanced):
         
         # If we have no chosen one or our chosen one is a zombie,
         # find the new chosen one
-        if (self.chosen_one == None or self.chosen_one in zombie.Zombie.get_all_instances()):
+        if (self.chosen_one == None):
             # Find the chosen normal to be protected
             self.chosen_one = find_chosen(our_gravity)
             # print(chosen_one.get_id(), chosen_one.get_xpos(), chosen_one.get_ypos())
+            self.chosen_one.set_as_chosen()
         
-        self.chosen_one.zombie_alert(our_gravity[0], our_gravity[1])
         
         """
         for n in normal.Normal.get_all_present_instances():
@@ -101,7 +105,7 @@ class Defender(MoveEnhanced):
 
         # Set the rough gravity location coordinates
         destination = (our_gravity[0] - self.get_xpos(), our_gravity[1] - self.get_ypos())
-        return destination
+        # return destination
         
 
 
@@ -144,4 +148,12 @@ class Defender(MoveEnhanced):
 
             self.set_happiness(delta_h + self.get_happiness())
 
-        return (delta_x, delta_y)
+        # alert the normals
+        for n in normal.Normal.get_all_present_instances():
+            for z in zombie.Zombie.get_all_present_instances():
+                if n.is_near(z, 20) == True:
+                    n.zombie_alert(z.get_xpos(), z.get_ypos())
+
+        self.chosen_one.zombie_alert(our_gravity[0], our_gravity[1])
+        # return (delta_x, delta_y)
+        return destination
