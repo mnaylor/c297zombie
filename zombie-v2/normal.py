@@ -54,14 +54,30 @@ def set_homebase():
     corner_set = ((0,0), (x_max, y_min), (x_min, y_max), (x_max, y_max))
 
     # set homebase to be the corner with the least # of zombies
-    homebase = min(
-        [(corner, get_count_near_point(corner, all_z), get_count_near_point(corner, all_n))
-         for corner in corner_set],
-         key = (lambda x:x[1])
-        )
+#    homebase = min(
+#        [(corner, get_count_near_point(corner, all_z), get_count_near_point(corner, all_n))
+#         for corner in corner_set],
+#         key = (lambda x:x[1])
+#        )
+    # find count of all zombies and normals in each corner
+    # sort based on number of zombies
+    count_list = [(corner, get_count_near_point(corner, all_z), 
+                  get_count_near_point(corner, all_n))
+                  for corner in corner_set]
+    count_list.sort(key = lambda x:x[1])
+    
+    # initialize homebase to corner with least number of zombies
+    homebase = count_list[0]
+    
+    # if there is a tie in number of zombies, choose corner with most normals
+    for i in range(3):
+        if homebase[1] == count_list[i + 1][1]:
+            if count_list[i][2] < count_list[i+1][2]:
+                homebase = count_list[i+1]
 
     if agentsim.debug.get(32):
-        print("homebase is {} with {} zombies".format(homebase[0], homebase[1]))
+        print("homebase is {} with {} zombies and {} normals".
+              format(homebase[0], homebase[1], homebase[2]))
 
     return homebase[0]
 
@@ -110,7 +126,7 @@ class Normal(MoveEnhanced):
         # this information can be processed.
 
         self._zombie_alert_args = None
-
+        
         self._at_home = False
 
         if agentsim.debug.get(2):
@@ -118,6 +134,7 @@ class Normal(MoveEnhanced):
 
         self.set_happiness(1 - 2 * random.random())
         self.set_size(random.uniform(self.get_min_size(), self.get_max_size()))
+        self._is_chosen = False
 
     def get_author(self):
         return "Alexander Wong, Michelle Naylor"
@@ -126,8 +143,8 @@ class Normal(MoveEnhanced):
         # if we have a pending zombie alert, act on that first
         if self._zombie_alert_args is not None:
             (x, y) = self._zombie_alert_args
-            delta_x = x - self.get_xpos()
-            delta_y = y - self.get_ypos()
+            delta_x = self.get_xpos() - x
+            delta_y = self.get_ypos() - y
             # clear the alert
             self._zombie_alert_args = None 
         # move towards zombie base
@@ -151,6 +168,10 @@ class Normal(MoveEnhanced):
         delta_y = self.get_ypos() - homebase[1]
 
         return (delta_x, delta_y)
+    
+    # Fix this Alex
+    def set_as_chosen(self):
+        self._is_chosen = True
             
 
     def compute_next_move(self):
@@ -165,7 +186,11 @@ class Normal(MoveEnhanced):
 
         if homebase == None:
             homebase = set_homebase()
-             
+
+        # if chosen, move to the gravity well
+        if self._is_chosen == True:
+            self.set_size(self.get_min_size())
+
         # move towards homebase if not yet near homebase
         if self._at_home == False:
             (delta_x, delta_y) = self.move_to_homebase()
@@ -194,6 +219,7 @@ class Normal(MoveEnhanced):
 
     def zombie_alert(self, x_dest, y_dest):
         # ignore any request not from a defender!
+        # Only the chosen one will get a zombie alert ping
         caller_name = callername.caller_name()
 
         if not re.search(r"\.Defender\.", caller_name):
