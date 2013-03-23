@@ -255,14 +255,14 @@ class Defender(MoveEnhanced):
             for i in Person.get_all_present_instances():
                 if i == self.chosen_one:
                     continue
-                if (self.is_near_after_move(i, tentative[0], tentative[1], 2)):
+                if (self.is_near_after_move(i, tentative[0], tentative[1], 1)):
                     # Cannot move towards chosen one, 
                     def_collision = True
             if (def_collision):
                 if agentsim.debug.get(32):
                     print("MoveEnhanced.move_by", self.get_name(), "would collide with", i.get_name(), tentative[0], tentative[1])
                 destination = self.rotate_around_chosen()
-                if self.is_near(self.chosen_one, 1):
+                if self.is_near(self.chosen_one, 5):
                     self.set_size(self.get_max_size())
                 return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos())   
             return tentative
