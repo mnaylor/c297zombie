@@ -134,7 +134,6 @@ class Normal(MoveEnhanced):
 
         self.set_happiness(1 - 2 * random.random())
         self.set_size(random.uniform(self.get_min_size(), self.get_max_size()))
-        self._is_chosen = False
 
     def get_author(self):
         return "Alexander Wong, Michelle Naylor"
@@ -143,8 +142,8 @@ class Normal(MoveEnhanced):
         # if we have a pending zombie alert, act on that first
         if self._zombie_alert_args is not None:
             (x, y) = self._zombie_alert_args
-            delta_x = self.get_xpos() - x
-            delta_y = self.get_ypos() - y
+            delta_x = x - self.get_xpos()
+            delta_y = y - self.get_ypos()
             # clear the alert
             self._zombie_alert_args = None 
         # move towards zombie base
@@ -181,10 +180,6 @@ class Normal(MoveEnhanced):
 
         if homebase == None:
             homebase = set_homebase()
-
-        # if chosen, move to the gravity well
-        if self._is_chosen == True:
-            self.set_size(self.get_min_size())
 
         # move towards homebase if not yet near homebase
         if self._at_home == False:
@@ -227,3 +222,7 @@ class Normal(MoveEnhanced):
         # remember where the alert told us to go so that we can use this
         # information when we compute the next move
         self._zombie_alert_args = (x_dest, y_dest)
+        # Make self tiny! This is necessary for the chosen one code, and this is the only
+        # way to communicate without adding a new function/field which will break with 
+        # other modules
+        self.set_size(self.get_min_size())

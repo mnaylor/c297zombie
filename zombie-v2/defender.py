@@ -24,20 +24,39 @@ from moveenhanced import MoveEnhanced
 import zombie
 import normal
 
+def fix_coordinates(coordinates):
+    fix_coords = [0,0]
+    if coordinates[0] < -10:
+        fix_coords[0] = -10
+    elif coordinates[0] > 10:
+        fix_coords[0] = 10
+    else:
+        fix_coords[0] = coordinates[0]
+    if coordinates[1] < -10:
+        fix_coords[1] = -10
+    elif coordinates[1] > 10:
+        fix_coords[1] = 10
+    else:
+        fix_coords[1] = coordinates[1]
+    return (fix_coords[0], fix_coords[1])
+
 def find_chosen(gravity):
     """
     This function takes a coordinate and finds the normal closest to it
     """
     min_grav = float("inf")
     chosen_one = None
-    for n in normal.Normal.get_all_present_instances():
-        location = (n.get_xpos(), n.get_ypos())
-        priority = ((gravity[0] - location[0]) ** 2 + (gravity[1] - location[1]) ** 2) ** 0.5
-        if priority < min_grav:
-            min_grav = priority
-            chosen_one = n
-
-    return chosen_one.get_name()
+    all_normals = normal.Normal.get_all_present_instances()
+    if len(all_normals) > 0:
+        for n in all_normals:
+            location = (n.get_xpos(), n.get_ypos())
+            priority = ((gravity[0] - location[0]) ** 2 + (gravity[1] - location[1]) ** 2) ** 0.5
+            if priority < min_grav:
+                min_grav = priority
+                chosen_one = n
+        return chosen_one
+    else:
+        return None
 
 def get_chosen_defenders():
     all_defenders = Defender.get_all_instances()
@@ -67,8 +86,6 @@ class Defender(MoveEnhanced):
         """
         This will get the center of gravity for all present defenders
         """
-        # Change this to three defenders only closest to the gravity
-
         all_defenders = self.get_all_present_instances()
         # Find the average coordinates of all the defenders in the field
         count_defender = 0
@@ -84,7 +101,31 @@ class Defender(MoveEnhanced):
         y_holder = y_holder/count_defender
         gravity = (x_holder, y_holder)
         if agentsim.debug.get(32):
-            print("Gravity: ", gravity)
+            print("All Defenders Gravity: ", gravity)
+        return gravity
+    
+    def get_chosen_gravity(self):
+        """
+        This will get the center of gravity for chosen defenders
+        """
+        all_defenders = self.get_all_present_instances()
+        # Find the average coordinates of the chosen defenders in the field
+        count_defender = 0
+        x_holder = 0
+        y_holder = 0
+        for i in all_defenders:
+            if ((i.chosen_defender == False) or i.chosen_defender == None):
+                continue
+            if agentsim.debug.get(32):
+                print("Defender: ", i.get_id(), i.get_xpos(), i.get_ypos())
+            x_holder += i.get_xpos()
+            y_holder += i.get_ypos()
+            count_defender += 1
+        x_holder = x_holder/count_defender
+        y_holder = y_holder/count_defender
+        gravity = (x_holder, y_holder)
+        if agentsim.debug.get(32):
+            print("All Chosen Gravity: ", gravity)
         return gravity
 
     def create_chosen_defenders(self, gravity):
@@ -111,27 +152,52 @@ class Defender(MoveEnhanced):
             else:
                 i[0].chosen_defender = True
         return
-            
+    def rotate_around_chosen(self):
+        # Use pythagorean theorm to determine move location
+        # Ideally, 30-60-90, right angle is 
+        # "C: Move To Location > B: Current Location > A: Chosen One Location"
+        # ABC = 90, CAB = 60, BCA = 30
+        rotator = (self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
+        origin = (self.get_xpos(), self.get_ypos())
+        angle = 1/(3**0.5)
+        turning = ((origin[0] + angle*(rotator[1] - origin[1])), (origin[1] + angle*(origin[0] - rotator[0])))
+        return turning
+        
+    
     def compute_next_move(self):
         delta_x = 0
         delta_y = 0
 
         # Find the gravity of the defenders
-        our_gravity = self.get_defender_gravity()
-
+        def_gravity = self.get_defender_gravity()
         # Assign at most three defenders to be the chosen defenders
         # Take the three defenders closest to the gravity well
         if len(get_chosen_defenders()) == 0:
-            self.create_chosen_defenders(our_gravity)
-        
-        # If we have no chosen one or our chosen one is a zombie,
-        # find the new chosen one
+            self.create_chosen_defenders(def_gravity)
+        # If we have no chosen one find the new chosen one
+        # Find the gravity of the chosen defenders
+        cho_gravity = self.get_chosen_gravity()
         if (self.chosen_one == None):
-            self.chosen_one = find_chosen(our_gravity)
+            if (agentsim.debug.get(32)):
+                print("Finding new chosen due to chosen_one == None")
+            self.chosen_one = find_chosen(cho_gravity)
+            if (agentsim.debug.get(32)):
+                if self.chosen_one == None:
+                    print("Chosen One cannot be found. All normals dead?")
+                else:
+                    print("Chosen One: ", self.chosen_one.get_id(), self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
+        # If our chosen one no longer exists, find the new chosen one
+        if (self.chosen_one not in normal.Normal.get_all_present_instances()):
+            if (agentsim.debug.get(32)):
+                print("Finding new chosen due to chosen_one not in normal instances")
+            self.chosen_one = find_chosen(cho_gravity)
+            if (agentsim.debug.get(32)):
+                if self.chosen_one == None:
+                    print("Chosen One cannot be found. All normals dead?")
+                else:
+                    print("Chosen One: ", self.chosen_one.get_id(), self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
         
-        # Set the rough gravity location coordinates
-        destination = (our_gravity[0] - self.get_xpos(), our_gravity[1] - self.get_ypos())
-        # return destination
+        destination = (cho_gravity[0] - self.get_xpos(), cho_gravity[1] - self.get_ypos())
         
         # find nearest zombie if there is one!
         all_z = zombie.Zombie.get_all_present_instances()
@@ -172,11 +238,32 @@ class Defender(MoveEnhanced):
 
         # alert the normals
         for n in normal.Normal.get_all_present_instances():
-            for z in zombie.Zombie.get_all_present_instances():
-                if n.is_near(z, 20) == True:
-                    n.zombie_alert(z.get_xpos(), z.get_ypos())
-
-        # self.chosen_one.zombie_alert(our_gravity[0], our_gravity[1])
-        chosen_one = normal.Normal.get_instances_with_name(self.chosen_one)
-        # return (delta_x, delta_y)
-        return destination
+            if n == self.chosen_one:
+                self.chosen_one.zombie_alert(cho_gravity[0], cho_gravity[1])
+                continue
+            else:
+                for z in zombie.Zombie.get_all_present_instances():
+                    if n.is_near(z, 20) == True:
+                        n.zombie_alert(z.get_xpos(), z.get_ypos())
+        
+        # If chosen protector, protect the chosen
+        if (self.chosen_defender == True) and (self.chosen_one != None):
+            # See if you can move towards the chosen one
+            def_collision = False
+            tentative = (self.chosen_one.get_xpos() - self.get_xpos(), self.chosen_one.get_ypos() - self.get_ypos())
+            tentative = fix_coordinates(tentative)
+            for i in Person.get_all_present_instances():
+                if i == self.chosen_one:
+                    continue
+                if (self.is_near_after_move(i, tentative[0], tentative[1], 1)):
+                    # Cannot move towards chosen one, 
+                    def_collision = True
+            if (def_collision):
+                if agentsim.debug.get(32):
+                    print("MoveEnhanced.move_by", self.get_name(), "would collide with", i.get_name(), tentative[0], tentative[1])
+                destination = self.rotate_around_chosen()
+                return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos())   
+            return tentative
+        # Else go kill the nearest zombie
+        else:
+            return (delta_x, delta_y)
