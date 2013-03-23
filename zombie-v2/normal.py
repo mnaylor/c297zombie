@@ -53,12 +53,6 @@ def set_homebase():
     (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
     corner_set = ((0,0), (x_max, y_min), (x_min, y_max), (x_max, y_max))
 
-    # set homebase to be the corner with the least # of zombies
-#    homebase = min(
-#        [(corner, get_count_near_point(corner, all_z), get_count_near_point(corner, all_n))
-#         for corner in corner_set],
-#         key = (lambda x:x[1])
-#        )
     # find count of all zombies and normals in each corner
     # sort based on number of zombies
     count_list = [(corner, get_count_near_point(corner, all_z), 
@@ -90,15 +84,16 @@ def invading_zombie(home):
     all_z = zombie.Zombie.get_all_present_instances()
 
     # find nearest zombie to homebase
-    z_near_home = min(
-        [ (z, distance_to_point(z, homebase)) for z in all_z ],
-        key = (lambda x: x[1]) )
+    if all_z:
+        z_near_home = min(
+            [ (z, distance_to_point(z, homebase)) for z in all_z ],
+            key = (lambda x: x[1]) )
 
-    (invading_z, dist_z) = z_near_home
+        (invading_z, dist_z) = z_near_home
            
-    # if zombie is within homebase threshold
-    if dist_z < zombie_near:
-        return invading_z
+        # if zombie is within homebase threshold
+        if dist_z < zombie_near:
+            return invading_z
 
 def sacrificial_lamb(invader):
     """
@@ -112,7 +107,10 @@ def sacrificial_lamb(invader):
         , key = (lambda x:x[1]))
                 
     (lamb, dist) = lamb_dist
-        
+
+    # make lamb scared and red
+    lamb.set_happiness(-1)
+    lamb.set_haircolor("red")    
     return lamb
 
 class Normal(MoveEnhanced):
@@ -152,6 +150,16 @@ class Normal(MoveEnhanced):
             delta_x = homebase[0] - self.get_xpos()
             delta_y = homebase[1] - self.get_ypos()
 
+        """
+        # check for collissions
+        for p in Person.get_all_present_instances():
+            if self.is_near_after_move(p, delta_x, delta_y):
+                if agentsim.debug.get(32):
+                    print("collision between {} and {}".format(
+                            self.get_name(), p.get_name()))
+                (delta_x, delta_y) = self.collision_handler(p, delta_x, delta_y)
+        """           
+
         # if near homebase, set self._at_home to true
         if distance_to_point(self, homebase) < normal_near:
             self._at_home = True
@@ -160,12 +168,30 @@ class Normal(MoveEnhanced):
 
         return (delta_x, delta_y)
 
+    
+    def collision_handler(self, obst, delta_x, delta_y):
+        """
+        when person is unable to move due to obstacle, 
+        NOT CURRENTLY IMPLEMENTED
+        """
+        collision = True
+        while collision == True:
+            for x in range(100):
+                for y in range(0, 100, 5):
+                    print("blah")
+                    delta_x = delta_x + x
+                    delta_y = delta_y + y
+                    if not self.is_near_after_move(obst, delta_x, delta_y):
+                        collision = False
+                        return (delta_x, delta_y)
+
     def lamb_move(self, homebase, invader):
         """
         sacrificial lamb will move away from homebase (for now)
         """
-        delta_x = self.get_xpos() - homebase[0]
-        delta_y = self.get_ypos() - homebase[1]
+        # move away from homebase and zombie
+        delta_x = self.get_xpos() - (homebase[0] + invader.get_xpos()) / 2
+        delta_y = self.get_ypos() - (homebase[1] + invader.get_ypos()) / 2
 
         return (delta_x, delta_y)
     
