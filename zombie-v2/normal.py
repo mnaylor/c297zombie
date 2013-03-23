@@ -167,12 +167,7 @@ class Normal(MoveEnhanced):
         delta_x = self.get_xpos() - homebase[0]
         delta_y = self.get_ypos() - homebase[1]
 
-        return (delta_x, delta_y)
-    
-    # Fix this Alex
-    def set_as_chosen(self):
-        self._is_chosen = True
-            
+        return (delta_x, delta_y)         
 
     def compute_next_move(self):
         # if no homebase, set homebase

@@ -37,14 +37,22 @@ def find_chosen(gravity):
             min_grav = priority
             chosen_one = n
 
-    return chosen_one
+    return chosen_one.get_name()
 
+def get_chosen_defenders():
+    all_defenders = Defender.get_all_instances()
+    chosen_defenders = []
+    for i in all_defenders:
+        if i.chosen_defender == True:
+            chosen_defenders.append(i)
+    return chosen_defenders
+    
 class Defender(MoveEnhanced):
     """
     Goes around attempting to prevent zombies form reaching normals
     """
     chosen_one = None
-    chosen_defender = False
+    chosen_defender = None
 
     def __init__(self, **keywords):
         MoveEnhanced.__init__(self, **keywords)
@@ -67,49 +75,63 @@ class Defender(MoveEnhanced):
         x_holder = 0
         y_holder = 0
         for i in all_defenders:
-            self.chosen_defender = True
-            print(i.get_id(), i.get_xpos(), i.get_ypos())
+            if agentsim.debug.get(32):
+                print("Defender: ", i.get_id(), i.get_xpos(), i.get_ypos())
             x_holder += i.get_xpos()
             y_holder += i.get_ypos()
             count_defender += 1
-            
         x_holder = x_holder/count_defender
         y_holder = y_holder/count_defender
         gravity = (x_holder, y_holder)
-        print(gravity)
+        if agentsim.debug.get(32):
+            print("Gravity: ", gravity)
         return gravity
-        
 
+    def create_chosen_defenders(self, gravity):
+        """
+        This function sets the chosen defender values for the three 
+        defenders closest to the gravity equal to True, while the
+        rest of the defenders are equal to zero
+
+        This function should only modify values once per game
+        Once chosen defenders are set, they are set for the duration 
+        """
+        all_defenders = self.get_all_present_instances()
+        audition = []
+        for i in all_defenders:
+            gravity_dist = ((i.get_xpos() - gravity[0])**2 + (i.get_ypos() - gravity[1])**2) ** 0.5
+            audition.append((i, gravity_dist))
+        sorted(audition, key=lambda defender: defender[1]) # Sort by distance, lowest to highest
+        # Take the first three (or less) defenders 
+        # and make them the sacred chosen guardians
+        
+        for i in audition:
+            if len(get_chosen_defenders()) == 3:
+                break
+            else:
+                i[0].chosen_defender = True
+        return
+            
     def compute_next_move(self):
         delta_x = 0
         delta_y = 0
-        
+
         # Find the gravity of the defenders
         our_gravity = self.get_defender_gravity()
+
+        # Assign at most three defenders to be the chosen defenders
+        # Take the three defenders closest to the gravity well
+        if len(get_chosen_defenders()) == 0:
+            self.create_chosen_defenders(our_gravity)
         
         # If we have no chosen one or our chosen one is a zombie,
         # find the new chosen one
         if (self.chosen_one == None):
-            # Find the chosen normal to be protected
             self.chosen_one = find_chosen(our_gravity)
-            # print(chosen_one.get_id(), chosen_one.get_xpos(), chosen_one.get_ypos())
-            self.chosen_one.set_as_chosen()
         
-        
-        """
-        for n in normal.Normal.get_all_present_instances():
-            for z in zombie.Zombie.get_all_present_instances():
-                if n.is_near(z, 20) == True:
-                    n.zombie_alert(z.get_xpos(), z.get_ypos())
-        """
-
         # Set the rough gravity location coordinates
         destination = (our_gravity[0] - self.get_xpos(), our_gravity[1] - self.get_ypos())
         # return destination
-        
-
-
-
         
         # find nearest zombie if there is one!
         all_z = zombie.Zombie.get_all_present_instances()
