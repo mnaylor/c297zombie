@@ -3,6 +3,16 @@ import agentsim
 from person import Person
 from moveenhanced import MoveEnhanced
 
+
+
+## ALEX!! ##
+# I put the defender debug stuff on flag 64 so that our debug print
+# statements don't get cluttered.  See zombiegame.py for a list of
+# relevant flags.  Plus, awesome job on the rotate_around_chosen()
+# function.  I stole it for normals.  You rock.
+
+
+
 # Design note:
 # The only reason for importing zombie and normal is to allow the class queries
 # for zombies, normals such as
@@ -76,6 +86,8 @@ class Defender(MoveEnhanced):
     def __init__(self, **keywords):
         MoveEnhanced.__init__(self, **keywords)
 
+        self._default_size = self.get_size()
+
         if agentsim.debug.get(2):
             print("Defender", self._name)
 
@@ -92,7 +104,7 @@ class Defender(MoveEnhanced):
         x_holder = 0
         y_holder = 0
         for i in all_defenders:
-            if agentsim.debug.get(32):
+            if agentsim.debug.get(64):
                 print("Defender: ", i.get_id(), i.get_xpos(), i.get_ypos())
             x_holder += i.get_xpos()
             y_holder += i.get_ypos()
@@ -100,7 +112,7 @@ class Defender(MoveEnhanced):
         x_holder = x_holder/count_defender
         y_holder = y_holder/count_defender
         gravity = (x_holder, y_holder)
-        if agentsim.debug.get(32):
+        if agentsim.debug.get(64):
             print("All Defenders Gravity: ", gravity)
         return gravity
     
@@ -116,7 +128,7 @@ class Defender(MoveEnhanced):
         for i in all_defenders:
             if ((i.chosen_defender == False) or i.chosen_defender == None):
                 continue
-            if agentsim.debug.get(32):
+            if agentsim.debug.get(64):
                 print("Defender: ", i.get_id(), i.get_xpos(), i.get_ypos())
             x_holder += i.get_xpos()
             y_holder += i.get_ypos()
@@ -124,7 +136,7 @@ class Defender(MoveEnhanced):
         x_holder = x_holder/count_defender
         y_holder = y_holder/count_defender
         gravity = (x_holder, y_holder)
-        if agentsim.debug.get(32):
+        if agentsim.debug.get(64):
             print("All Chosen Gravity: ", gravity)
         return gravity
 
@@ -140,9 +152,11 @@ class Defender(MoveEnhanced):
         all_defenders = self.get_all_present_instances()
         audition = []
         for i in all_defenders:
-            gravity_dist = ((i.get_xpos() - gravity[0])**2 + (i.get_ypos() - gravity[1])**2) ** 0.5
+            gravity_dist = ((i.get_xpos() - gravity[0])**2 + (i.get_ypos() 
+                            - gravity[1])**2) ** 0.5
             audition.append((i, gravity_dist))
-        sorted(audition, key=lambda defender: defender[1]) # Sort by distance, lowest to highest
+        sorted(audition, key=lambda defender: defender[1]) 
+        # Sort by distance, lowest to highest
         # Take the first three (or less) defenders 
         # and make them the sacred chosen guardians
         
@@ -152,6 +166,7 @@ class Defender(MoveEnhanced):
             else:
                 i[0].chosen_defender = True
         return
+
     def rotate_around_chosen(self):
         # Use pythagorean theorm to determine move location
         # Ideally, 30-60-90, right angle is 
@@ -160,13 +175,17 @@ class Defender(MoveEnhanced):
         rotator = (self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
         origin = (self.get_xpos(), self.get_ypos())
         angle = 1/(3**0.5)
-        turning = ((origin[0] + angle*(rotator[1] - origin[1])), (origin[1] + angle*(origin[0] - rotator[0])))
-        return turning
-        
+        turning = ((origin[0] + angle*(rotator[1] - origin[1])), (origin[1] 
+                   + angle*(origin[0] - rotator[0])))
+        return turning        
     
     def compute_next_move(self):
         delta_x = 0
         delta_y = 0
+
+        # revert back to original size
+        # /max size if you are a chosen defender
+        self.set_size(self._default_size)
 
         # Find the gravity of the defenders
         def_gravity = self.get_defender_gravity()
@@ -178,26 +197,29 @@ class Defender(MoveEnhanced):
         # Find the gravity of the chosen defenders
         cho_gravity = self.get_chosen_gravity()
         if (self.chosen_one == None):
-            if (agentsim.debug.get(32)):
+            if (agentsim.debug.get(64)):
                 print("Finding new chosen due to chosen_one == None")
             self.chosen_one = find_chosen(cho_gravity)
-            if (agentsim.debug.get(32)):
+            if (agentsim.debug.get(64)):
                 if self.chosen_one == None:
                     print("Chosen One cannot be found. All normals dead?")
                 else:
-                    print("Chosen One: ", self.chosen_one.get_id(), self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
+                    print("Chosen One: ", self.chosen_one.get_id(), 
+                          self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
         # If our chosen one no longer exists, find the new chosen one
         if (self.chosen_one not in normal.Normal.get_all_present_instances()):
-            if (agentsim.debug.get(32)):
+            if (agentsim.debug.get(64)):
                 print("Finding new chosen due to chosen_one not in normal instances")
             self.chosen_one = find_chosen(cho_gravity)
-            if (agentsim.debug.get(32)):
+            if (agentsim.debug.get(64)):
                 if self.chosen_one == None:
                     print("Chosen One cannot be found. All normals dead?")
                 else:
-                    print("Chosen One: ", self.chosen_one.get_id(), self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
+                    print("Chosen One: ", self.chosen_one.get_id(), 
+                          self.chosen_one.get_xpos(), self.chosen_one.get_ypos())
         
-        destination = (cho_gravity[0] - self.get_xpos(), cho_gravity[1] - self.get_ypos())
+        destination = (cho_gravity[0] - self.get_xpos(), 
+                       cho_gravity[1] - self.get_ypos())
         
         # find nearest zombie if there is one!
         all_z = zombie.Zombie.get_all_present_instances()
@@ -250,7 +272,8 @@ class Defender(MoveEnhanced):
         if (self.chosen_defender == True) and (self.chosen_one != None):
             # See if you can move towards the chosen one
             def_collision = False
-            tentative = (self.chosen_one.get_xpos() - self.get_xpos(), self.chosen_one.get_ypos() - self.get_ypos())
+            tentative = (self.chosen_one.get_xpos() - self.get_xpos(), 
+                         self.chosen_one.get_ypos() - self.get_ypos())
             tentative = fix_coordinates(tentative)
             for i in Person.get_all_present_instances():
                 if i == self.chosen_one:
@@ -259,13 +282,23 @@ class Defender(MoveEnhanced):
                     # Cannot move towards chosen one, 
                     def_collision = True
             if (def_collision):
-                if agentsim.debug.get(32):
-                    print("MoveEnhanced.move_by", self.get_name(), "would collide with", i.get_name(), tentative[0], tentative[1])
+                if agentsim.debug.get(64):
+                    print("MoveEnhanced.move_by", self.get_name(), 
+                          "would collide with", i.get_name(), 
+                          tentative[0], tentative[1])
                 destination = self.rotate_around_chosen()
                 if self.is_near(self.chosen_one, 5):
-                    self.set_size(self.get_max_size())
-                return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos())   
+                    self._default_size = self.get_max_size()
+                return (destination[0] - self.get_xpos(), destination[1] 
+                        - self.get_ypos())   
             return tentative
+
         # Else go kill the nearest zombie
         else:
+            # if close to zombie, get bigger to swallow zombie
+            if d < 25:
+                old_size = self.get_size()
+                max_size = self.get_max_size()
+                self.set_size(max_size)
+
             return (delta_x, delta_y)

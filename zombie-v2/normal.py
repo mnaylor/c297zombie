@@ -14,7 +14,7 @@ zombie_near = 250
 normal_near = 100
 # inititalize global homebase to none
 homebase = None
-
+lamb = None
 
 def distance_to_point(person, point):
     """
@@ -99,6 +99,7 @@ def sacrificial_lamb(invader):
     """
     selects sacrificial lamb to be used as zombie bait
     """
+    global lamb
     all_n = Normal.get_all_present_instances()
                 
     # sacrificial lamb is the normal closest to the zombie
@@ -149,40 +150,54 @@ class Normal(MoveEnhanced):
             delta_x = homebase[0] - self.get_xpos()
             delta_y = homebase[1] - self.get_ypos()
 
-        """
         # check for collissions
-        for p in Person.get_all_present_instances():
-            if self.is_near_after_move(p, delta_x, delta_y):
-                if agentsim.debug.get(32):
-                    print("collision between {} and {}".format(
-                            self.get_name(), p.get_name()))
-                (delta_x, delta_y) = self.collision_handler(p, delta_x, delta_y)
-        """           
+        obstacle = self.collision_check(delta_x, delta_y)
+        
+        if obstacle:
+            (delta_x, delta_y) = self.rotate_around_obst(obstacle, delta_x, delta_y)
 
         # if near homebase, set self._at_home to true
         if distance_to_point(self, homebase) < normal_near:
             self._at_home = True
+            self.set_happiness(0.5)
             if agentsim.debug.get(32):
                 print("normal {} is at home".format( self.get_name()))
 
         return (delta_x, delta_y)
 
-    
-    def collision_handler(self, obst, delta_x, delta_y):
+    def collision_check(self, delta_x, delta_y):
+        # find potential collisions
+        for p in Person.get_all_present_instances():
+            if p == self: break
+            (d, dx, dy, d_e_e) = self.distances_to(p)
+            dx = dx - delta_x
+            dy = dy - delta_y
+            d = (dx*dx + dy*dy) ** 0.5  - (self.get_size() 
+                + p.get_size()) / 2
+            
+            # if distance between self and person < move_limit, return
+            # person that is in the way
+            if abs(d) < self.get_move_limit():
+                if agentsim.debug.get(32):
+                    print("collision between {} and {} at distance {}".format(
+                            self.get_name(), p.get_name(), d))
+                return p
+
+    def rotate_around_obst(self, obst, delta_x, delta_y):
         """
-        when person is unable to move due to obstacle, 
-        NOT CURRENTLY IMPLEMENTED
+        when person is unable to move due to obstacle, rotate around
+        the obstacle
         """
-        collision = True
-        while collision == True:
-            for x in range(100):
-                for y in range(0, 100, 5):
-                    print("blah")
-                    delta_x = delta_x + x
-                    delta_y = delta_y + y
-                    if not self.is_near_after_move(obst, delta_x, delta_y):
-                        collision = False
-                        return (delta_x, delta_y)
+        rotator = (obst.get_xpos(), obst.get_ypos())
+        origin = (self.get_xpos(), self.get_ypos())
+        angle = 1/(3**0.5)
+        destination = ((origin[0] + angle*(rotator[1] - origin[1])), 
+                              (origin[1] + angle*(origin[0] - rotator[0])))
+        delta_x = destination[0] - self.get_xpos()
+        delta_y = destination[1] - self.get_ypos()
+
+        return (delta_x, delta_y)
+
 
     def lamb_move(self, homebase, invader):
         """
@@ -251,4 +266,6 @@ class Normal(MoveEnhanced):
         # Make self tiny! This is necessary for the chosen one code, and this is the only
         # way to communicate without adding a new function/field which will break with 
         # other modules
+        # make chosen one really happy, he has been chosen!
         self.set_size(self.get_min_size())
+        self.set_happiness(1)
