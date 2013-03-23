@@ -114,7 +114,9 @@ class MoveEnhanced(Person):
             # would we collide with p?
             if self.is_near_after_move(p, delta_x, delta_y):
                 if agentsim.debug.get(16):
-                    print("MoveEnhanced.move_by", self.get_name(), "would collide with", p.get_name(), delta_x, delta_y)
+                    print("MoveEnhanced.move_by", self.get_name(), 
+                          "would collide with", p.get_name(), 
+                          delta_x, delta_y)
 
                 no_collision = False
                 break
@@ -122,7 +124,8 @@ class MoveEnhanced(Person):
         # make the move if no collision
         if no_collision:
             if agentsim.debug.get(16):
-                print("MoveEnhanced.move_by", self.get_name(), "moving by", delta_x, delta_y)
+                print("MoveEnhanced.move_by", self.get_name(), 
+                      "moving by", delta_x, delta_y)
             super(MoveEnhanced, self).move_by(delta_x, delta_y)
 
     def is_near_after_move(self, target, delta_x, delta_y, epsilon = 0):
