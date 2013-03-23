@@ -176,6 +176,7 @@ class Defender(MoveEnhanced):
                 if n.is_near(z, 20) == True:
                     n.zombie_alert(z.get_xpos(), z.get_ypos())
 
-        self.chosen_one.zombie_alert(our_gravity[0], our_gravity[1])
+        # self.chosen_one.zombie_alert(our_gravity[0], our_gravity[1])
+        chosen_one = normal.Normal.get_instances_with_name(self.chosen_one)
         # return (delta_x, delta_y)
         return destination
