@@ -3,16 +3,6 @@ import agentsim
 from person import Person
 from moveenhanced import MoveEnhanced
 
-
-
-## ALEX!! ##
-# I put the defender debug stuff on flag 64 so that our debug print
-# statements don't get cluttered.  See zombiegame.py for a list of
-# relevant flags.  Plus, awesome job on the rotate_around_chosen()
-# function.  I stole it for normals.  You rock.
-
-
-
 # Design note:
 # The only reason for importing zombie and normal is to allow the class queries
 # for zombies, normals such as
@@ -33,6 +23,12 @@ from moveenhanced import MoveEnhanced
 
 import zombie
 import normal
+
+"""
+These defenders are taking advantage of a bug with size changing.
+It will choose three available defenders to guard a 'chosen' normal
+by engulfing the normal into the defender's circle.
+"""
 
 def fix_coordinates(coordinates):
     fix_coords = [0,0]
