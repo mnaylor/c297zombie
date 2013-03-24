@@ -20,6 +20,18 @@ class Zombie(MoveEnhanced):
     def get_author(self):
         return "Alexander Wong, Michelle Naylor"
 
+    def rotate_around_point(self, point):
+        # Use pythagorean theorm to determine move location
+        # Ideally, 30-60-90, right angle is 
+        # "C: Move To Location > B: Current Location > A: Chosen One Location"
+        # ABC = 90, CAB = 60, BCA = 30
+        rotator = (point[0], point[1])
+        origin = (self.get_xpos(), self.get_ypos())
+        angle = 1/(3**0.5)
+        turning = ((origin[0] + angle*(rotator[1] - origin[1])), (origin[1] 
+                   + angle*(origin[0] - rotator[0])))
+        return turning   
+
     def compute_next_move(self):
 
         """
@@ -83,5 +95,20 @@ class Zombie(MoveEnhanced):
             # if close to target, get bigger
             if d < 25:
                 self.set_size(self.get_max_size())
+        
+        # See if zombie can move towards the target
+        def_collision = False
+        for i in Person.get_all_present_instances():
+            if i == target:
+                continue
+            if (self.is_near_after_move(i, delta_x, delta_y, 1)):
+                def_collision = True
 
-        return (delta_x, delta_y)
+        if def_collision:
+            coordinates = (target.get_xpos(), target.get_ypos())
+            if agentsim.debug.get(128):
+                print("Rotation coordinates: ", coordinates)
+                destination = (self.rotate_around_point(coordinates))
+                return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos())
+        else:
+            return (delta_x, delta_y)
