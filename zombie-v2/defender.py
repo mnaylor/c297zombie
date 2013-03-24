@@ -158,7 +158,9 @@ class Defender(MoveEnhanced):
         # and make them the sacred chosen guardians
         
         for i in audition:
-            if len(get_chosen_defenders()) == 3:
+            # Change this number to adjust number of chosen defenders
+            num_chosen_defenders = 1
+            if len(get_chosen_defenders()) == num_chosen_defenders:
                 break
             else:
                 # i[0].set_size(i[0].get_min_size())
