@@ -300,10 +300,8 @@ class Defender(MoveEnhanced):
 
         # Else go kill the nearest zombie
         else:
+            self.set_size(self.get_min_size())
             # if close to zombie, get bigger to swallow zombie
             if d < 25:
-                old_size = self.get_size()
-                max_size = self.get_max_size()
-                self.set_size(max_size)
-
+                self.set_size(self.get_max_size())
             return (delta_x, delta_y)

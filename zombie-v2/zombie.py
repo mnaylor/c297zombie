@@ -35,7 +35,7 @@ class Zombie(MoveEnhanced):
     def compute_next_move(self):
 
         """
-        These zombies move to their unique closest normal
+        These zombies move to their closest unique normal
         """
         
         if agentsim.debug.get(128):
@@ -105,7 +105,7 @@ class Zombie(MoveEnhanced):
             if (self.is_near_after_move(i, delta_x, delta_y, 1)):
                 def_collision = True
 
-        if def_collision:
+        if (def_collision) and (target != None):
             coordinates = (target.get_xpos(), target.get_ypos())
             if agentsim.debug.get(128):
                 print("Rotation coordinates: ", coordinates)
