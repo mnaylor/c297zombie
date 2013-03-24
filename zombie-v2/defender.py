@@ -28,6 +28,12 @@ import normal
 These defenders are taking advantage of a bug with size changing.
 It will choose three available defenders to guard a 'chosen' normal
 by engulfing the normal into the defender's circle.
+
+NOTE: Chosen defenders will be a ratio of 1:3 of all defenders, with a 
+minimum of 1 chosen defender at all times.
+ie) 1 defender -> 1 chosen defender, 0 normal defenders
+6 defenders -> 2 chosen defenders, 4 normal defenders
+5 defenders -> 1 chosen defender, 4 normal defenders
 """
 
 def fix_coordinates(coordinates):
@@ -143,7 +149,7 @@ class Defender(MoveEnhanced):
 
     def create_chosen_defenders(self, gravity):
         """
-        This function sets the chosen defender values for the three 
+        This function sets the chosen defender values for the chosen
         defenders closest to the gravity equal to True, while the
         rest of the defenders are equal to zero
 
@@ -158,11 +164,11 @@ class Defender(MoveEnhanced):
             audition.append((i, gravity_dist))
         sorted(audition, key=lambda defender: defender[1]) 
         # Sort by distance, lowest to highest
-        # Take the first three (or less) defenders 
         # and make them the sacred chosen guardians
         
         for i in audition:
             # Change this number to adjust number of chosen defenders
+            # Will be a ratio 1/3rd of all defenders
             num_chosen_defenders = len(Defender.get_all_present_instances())//3
             if num_chosen_defenders <= 0:
                 num_chosen_defenders == 1
@@ -197,8 +203,8 @@ class Defender(MoveEnhanced):
 
         # Find the gravity of the defenders
         def_gravity = self.get_defender_gravity()
-        # Assign at most three defenders to be the chosen defenders
-        # Take the three defenders closest to the gravity well
+        # Assign at most 1/3rd of all defenders to be the chosen defenders
+        # Take the defenders closest to the gravity well
         if len(get_chosen_defenders()) == 0:
             self.create_chosen_defenders(def_gravity)
         # If we have no chosen one find the new chosen one
