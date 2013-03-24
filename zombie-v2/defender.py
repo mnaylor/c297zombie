@@ -31,6 +31,10 @@ by engulfing the normal into the defender's circle.
 """
 
 def fix_coordinates(coordinates):
+    """
+    This function attempts to reduce the error checking for
+    the move enhanced functions by reducing the coordinates to +- 10
+    """
     fix_coords = [0,0]
     if coordinates[0] < -10:
         fix_coords[0] = -10
@@ -75,7 +79,7 @@ def get_chosen_defenders():
     
 class Defender(MoveEnhanced):
     """
-    Goes around attempting to prevent zombies form reaching normals
+    Goes around attempting to prevent zombies from reaching normals
     """
     chosen_one = None
     chosen_defender = None
