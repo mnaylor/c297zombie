@@ -162,6 +162,8 @@ class Defender(MoveEnhanced):
             num_chosen_defenders = len(Defender.get_all_present_instances())//3
             if num_chosen_defenders <= 0:
                 num_chosen_defenders == 1
+                i[0].chosen_defender = True
+                break
             if len(get_chosen_defenders()) == num_chosen_defenders:
                 break
             else:
