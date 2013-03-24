@@ -38,7 +38,8 @@ def fix_coordinates(coordinates):
         fix_coords[1] = 10
     else:
         fix_coords[1] = coordinates[1]
-    return (fix_coords[0], fix_coords[1])
+    direct = (fix_coords[0], fix_coords[1])
+    return direct
 
 def find_chosen(gravity):
     """
@@ -150,6 +151,7 @@ class Defender(MoveEnhanced):
             if len(get_chosen_defenders()) == 3:
                 break
             else:
+                # i[0].set_size(i[0].get_min_size())
                 i[0].chosen_defender = True
         return
     def rotate_around_chosen(self):
@@ -262,10 +264,14 @@ class Defender(MoveEnhanced):
                 if agentsim.debug.get(32):
                     print("MoveEnhanced.move_by", self.get_name(), "would collide with", i.get_name(), tentative[0], tentative[1])
                 destination = self.rotate_around_chosen()
-                if self.is_near(self.chosen_one, 5):
-                    self.set_size(self.get_max_size())
-                return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos())   
-            return tentative
+                self.set_size(self.get_max_size())
+                return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos()) 
+            else:
+                self.set_size(self.get_min_size())
+                for p in Person.get_all_present_instances():
+                    if self.is_near_after_move(p, tentative[0], tentative[1]):
+                        self.set_size(self.get_max_size())
+                return tentative
         # Else go kill the nearest zombie
         else:
             return (delta_x, delta_y)
