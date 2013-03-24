@@ -47,6 +47,7 @@ class Zombie(MoveEnhanced):
         self.set_size(self.get_min_size())
 
         all_n = normal.Normal.get_all_present_instances()
+        target = self.my_target
         if all_n:
             audition = []
             for i in all_n:
