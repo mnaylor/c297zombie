@@ -159,7 +159,9 @@ class Defender(MoveEnhanced):
         
         for i in audition:
             # Change this number to adjust number of chosen defenders
-            num_chosen_defenders = 1
+            num_chosen_defenders = len(Defender.get_all_present_instances())//3
+            if num_chosen_defenders <= 0:
+                num_chosen_defenders == 1
             if len(get_chosen_defenders()) == num_chosen_defenders:
                 break
             else:
