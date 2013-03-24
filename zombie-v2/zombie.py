@@ -109,7 +109,6 @@ class Zombie(MoveEnhanced):
             if agentsim.debug.get(128):
                 print("Rotation coordinates: ", coordinates)
             destination = (self.rotate_around_point(coordinates))
-            print("Zombie destination: ", destination)
             return (destination[0] - self.get_xpos(), destination[1] - self.get_ypos())
         else:
             return (delta_x, delta_y)
