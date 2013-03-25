@@ -139,7 +139,6 @@ class MoveEnhanced(Person):
         dx = dx - delta_x
         dy = dy - delta_y
         d = (dx*dx + dy*dy) ** 0.5  - (self.get_size() + target.get_size()) / 2
-
         r = d <= epsilon 
 
         return r

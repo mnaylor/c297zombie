@@ -12,7 +12,7 @@ import defender
 # used to calculate distance to homebase
 zombie_near = 250
 normal_near = 100
-# inititalize global homebase to none
+# inititalize global homebase and lamb to none
 homebase = None
 lamb = None
 
@@ -104,7 +104,7 @@ def sacrificial_lamb(invader):
                 
     # sacrificial lamb is the normal closest to the zombie
     lamb_dist = min(
-        [ (n, invader.distances_to(n)[0]) for n in all_n ]
+        [(n, invader.distances_to(n)[0]) for n in all_n]
         , key = (lambda x:x[1]))
                 
     (lamb, dist) = lamb_dist
@@ -112,6 +112,10 @@ def sacrificial_lamb(invader):
     # make lamb scared and red
     lamb.set_happiness(-1)
     lamb.set_haircolor("red")    
+
+    if agentsim.debug.get(32):
+        print("normal {} is the sacrificial lamb".format(lamb.get_name()))
+
     return lamb
 
 class Normal(MoveEnhanced):
@@ -127,6 +131,7 @@ class Normal(MoveEnhanced):
         self._zombie_alert_args = None
         
         self._at_home = False
+        self._initial = True
 
         if agentsim.debug.get(2):
             print("Normal", self._name)
@@ -145,19 +150,23 @@ class Normal(MoveEnhanced):
             delta_y = y - self.get_ypos()
             # clear the alert
             self._zombie_alert_args = None 
-        # move towards zombie base
+        # move towards home base
         else:
             delta_x = homebase[0] - self.get_xpos()
             delta_y = homebase[1] - self.get_ypos()
 
         # check for collissions
         obstacle = self.collision_check(delta_x, delta_y)
-        
+
         if obstacle:
-            (delta_x, delta_y) = self.rotate_around_obst(obstacle, delta_x, delta_y)
+            destination = self.rotate_around_point((
+                    obstacle.get_xpos(), obstacle.get_ypos()))
+            delta_x = destination[0] - self.get_xpos()
+            delta_y = destination[1] - self.get_xpos()
 
         # if near homebase, set self._at_home to true
-        if distance_to_point(self, homebase) < normal_near:
+        if (self._at_home == False and 
+            distance_to_point(self, homebase) < normal_near):
             self._at_home = True
             self.set_happiness(0.5)
             if agentsim.debug.get(32):
@@ -183,38 +192,63 @@ class Normal(MoveEnhanced):
                             self.get_name(), p.get_name(), d))
                 return p
 
-    def rotate_around_obst(self, obst, delta_x, delta_y):
-        """
-        when person is unable to move due to obstacle, rotate around
-        the obstacle
-        """
-        rotator = (obst.get_xpos(), obst.get_ypos())
+    def rotate_around_point(self, point):
+        # Use pythagorean theorm to determine move location
+        # Ideally, 30-60-90, right angle is 
+        # "C: Move To Location > B: Current Location > A: Chosen One Location"
+        # ABC = 90, CAB = 60, BCA = 30
+        rotator = (point[0], point[1])
         origin = (self.get_xpos(), self.get_ypos())
         angle = 1/(3**0.5)
-        destination = ((origin[0] + angle*(rotator[1] - origin[1])), 
-                              (origin[1] + angle*(origin[0] - rotator[0])))
-        delta_x = destination[0] - self.get_xpos()
-        delta_y = destination[1] - self.get_ypos()
-
-        return (delta_x, delta_y)
-
+        turning = ((origin[0] + angle*(rotator[1] - origin[1])), (origin[1] 
+                   + angle*(origin[0] - rotator[0])))
+        return turning
 
     def lamb_move(self, homebase, invader):
         """
         sacrificial lamb will move away from homebase (for now)
         """
-        # move away from homebase and zombie
-        delta_x = self.get_xpos() - (homebase[0] + invader.get_xpos()) / 2
-        delta_y = self.get_ypos() - (homebase[1] + invader.get_ypos()) / 2
+        x = 0
+        y = 0
+
+        # if zombie alert, factor into run away from homebase
+        if self._zombie_alert_args is not None:
+            (x, y) = self._zombie_alert_args
+        # clear alert
+        self._zombie_alert_args = None 
+
+        # move away from homebase & zombie
+        delta_x = self.get_xpos() - (homebase[0] + x)
+        delta_y = self.get_ypos() - (homebase[1] + y)
+
+        # check for collissions
+        obstacle = self.collision_check(delta_x, delta_y)
+        
+        if obstacle:
+            destination = self.rotate_around_point((
+                    obstacle.get_xpos(), obstacle.get_ypos()))
+            delta_x = destination[0] - self.get_xpos()
+            delta_y = destination[1] - self.get_xpos()
 
         return (delta_x, delta_y)         
 
     def compute_next_move(self):
         # if no homebase, set homebase
         global homebase
+        global lamb
         delta_x = 0
         delta_y = 0
-        lamb = None
+
+        if self._initial == True:
+            for p in Person.get_all_present_instances():
+                # if overlapping another person, move to another
+                # random spot
+                if self.is_near(p) == True:
+                    if agentsim.debug.get(32):
+                        print("{} and {} are overlapping".format(
+                                self.get_name(), p.get_name()))
+                        self.set_size(self.get_min_size())
+            self._initial = False
 
         # find all zombies
         all_z = zombie.Zombie.get_all_present_instances()
@@ -222,21 +256,14 @@ class Normal(MoveEnhanced):
         if homebase == None:
             homebase = set_homebase()
 
-        # move towards homebase if not yet near homebase
-        if self._at_home == False:
-            (delta_x, delta_y) = self.move_to_homebase()
-            return (delta_x, delta_y)
-
         # if zombie is near homebase, send sacrificial lamb
         invading_z = invading_zombie(homebase)
-        if invading_z and not lamb:
+        if invading_z:
             lamb = sacrificial_lamb(invading_z)
             
-            # sucker, you are bait
-            if self.get_id() == lamb.get_id():
-                (delta_x, delta_y) = self.lamb_move(homebase, invading_z)
-                if agentsim.debug.get(32):
-                    print("normal {} is the sacrificial lamb".format( self.get_name()))
+        # sucker, you are bait
+        if lamb and self.get_id() == lamb.get_id():
+            (delta_x, delta_y) = self.lamb_move(homebase, invading_z)
 
         # default, move towards homebase
         else:
